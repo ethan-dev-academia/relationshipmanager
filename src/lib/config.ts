@@ -15,6 +15,12 @@ export const MY_NAME = process.env.NEXT_PUBLIC_MY_NAME ?? "Ethan";
 export const PARTNER_NAME = process.env.NEXT_PUBLIC_PARTNER_NAME ?? "My Love";
 export const COUPLE = `${MY_NAME} & ${PARTNER_NAME}`;
 
+/** Sign-in emails, used to auto-detect who is on this device once signed in. */
+export const MY_EMAIL = (process.env.NEXT_PUBLIC_MY_EMAIL ?? "").toLowerCase();
+export const PARTNER_EMAIL = (
+  process.env.NEXT_PUBLIC_PARTNER_EMAIL ?? ""
+).toLowerCase();
+
 /** Relationship start date. Defaults to March 7th, 2026. */
 export const RELATIONSHIP_START =
   process.env.NEXT_PUBLIC_RELATIONSHIP_START ?? "2026-03-07";

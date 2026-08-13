@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { MY_NAME, PARTNER_NAME } from "@/lib/config";
+import { MY_NAME, PARTNER_NAME, MY_EMAIL, PARTNER_EMAIL } from "@/lib/config";
 
 /** Stable per-couple room id. It's just the two of them, so one room. */
 export const COUPLE_ID =
@@ -41,6 +41,22 @@ export function useIdentity() {
 
   useEffect(() => {
     setMeIndexState(readLocal<0 | 1>("us.meIndex", 0));
+
+    // When signed in, figure out who this is from the account email so each
+    // person automatically shows up as themselves — no manual picking needed.
+    const supabase = createClient();
+    if (!supabase) return;
+    supabase.auth.getUser().then(({ data }) => {
+      const email = data.user?.email?.toLowerCase();
+      if (!email) return;
+      let idx: 0 | 1 | null = null;
+      if (PARTNER_EMAIL && email === PARTNER_EMAIL) idx = 1;
+      else if (MY_EMAIL && email === MY_EMAIL) idx = 0;
+      if (idx !== null) {
+        window.localStorage.setItem("us.meIndex", JSON.stringify(idx));
+        setMeIndexState(idx);
+      }
+    });
   }, []);
 
   const setMeIndex = useCallback((i: 0 | 1) => {
