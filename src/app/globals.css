@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-1: #fff5f7;
+  --bg-2: #ffe9f0;
+  --bg-3: #ffdce9;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  color: #4a1f33;
+  background:
+    radial-gradient(1200px 800px at 15% -10%, #ffe0ec 0%, transparent 55%),
+    radial-gradient(1000px 700px at 110% 10%, #ffd0e6 0%, transparent 50%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 45%, var(--bg-3) 100%);
+  background-attachment: fixed;
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+}
+
+/* iOS safe-area helpers */
+.safe-top {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+@layer components {
+  /* The core "liquid glass" surface */
+  .glass {
+    @apply rounded-3xl border border-white/50 bg-white/40 shadow-glass backdrop-blur-2xl backdrop-saturate-150;
+  }
+  .glass-strong {
+    @apply rounded-3xl border border-white/60 bg-white/60 shadow-glass-lg backdrop-blur-2xl backdrop-saturate-150;
+  }
+  .glass-pill {
+    @apply rounded-full border border-white/50 bg-white/45 backdrop-blur-xl;
+  }
+
+  .btn-primary {
+    @apply rounded-2xl bg-gradient-to-b from-rose-400 to-rose-500 px-5 py-3 font-semibold text-white shadow-[0_8px_24px_rgba(240,45,116,0.35)] transition active:scale-[0.97];
+  }
+  .btn-glass {
+    @apply glass rounded-2xl px-5 py-3 font-semibold text-rose-700 transition active:scale-[0.97];
+  }
+
+  .section-title {
+    @apply text-sm font-semibold uppercase tracking-wider text-rose-400/80;
+  }
+}
+
+/* Hide scrollbars but keep scrolling (mobile feel) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -1,0 +1,15 @@
+// Central runtime config. Everything degrades gracefully when Supabase isn't configured yet,
+// so you can see the full UI before wiring up a Supabase project.
+
+export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+
+/** True when a real Supabase project is wired up (auth + data persistence enabled). */
+export const IS_SUPABASE_CONFIGURED =
+  SUPABASE_URL.startsWith("http") && SUPABASE_ANON_KEY.length > 20;
+
+export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "Us";
+
+/** Relationship start date. Defaults to March 7th, 2026. */
+export const RELATIONSHIP_START =
+  process.env.NEXT_PUBLIC_RELATIONSHIP_START ?? "2026-03-07";
