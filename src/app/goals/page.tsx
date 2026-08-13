@@ -5,7 +5,8 @@ import { Plus, Minus, Circle, CheckCircle2, Trash2 } from "lucide-react";
 import Screen from "@/components/Screen";
 import { Section } from "@/components/List";
 import IconTile from "@/components/IconTile";
-import { usePersistent, makeId } from "@/lib/store";
+import { makeId } from "@/lib/store";
+import { useShared } from "@/lib/couple";
 import { useCurrency, COIN } from "@/lib/currency";
 import {
   type Goal,
@@ -21,7 +22,7 @@ import {
 const REWARD = 20;
 
 export default function GoalsPage() {
-  const [goals, setGoals] = usePersistent<Goal[]>(GOALS_KEY, []);
+  const [goals, setGoals] = useShared<Goal[]>("goals", []);
   const { earn } = useCurrency();
 
   const [open, setOpen] = useState(false);

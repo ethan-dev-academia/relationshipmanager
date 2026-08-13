@@ -1,16 +1,15 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import Screen from "@/components/Screen";
 import { Section } from "@/components/List";
 import { getQuiz } from "@/lib/quizzes";
-import { usePersistent } from "@/lib/store";
 import { useCurrency, COIN } from "@/lib/currency";
 import { useQuizProgress } from "@/lib/quizProgress";
-import { useIdentity } from "@/lib/couple";
+import { useIdentity, useShared } from "@/lib/couple";
 
 type Answers = Record<string, string>;
-type Player = "me" | "partner";
+type View = "me" | "partner";
 
 const MATCH_GREEN = "#34c759";
 
@@ -19,31 +18,44 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
   const quiz = getQuiz(id);
   const { earn } = useCurrency();
   const { markComplete } = useQuizProgress();
-  const { myName, partnerName } = useIdentity();
+  const { meIndex } = useIdentity();
 
-  const [meAns, setMeAns] = usePersistent<Answers>(`us.quiz.${id}.me`, {});
-  const [partnerAns, setPartnerAns] = usePersistent<Answers>(
-    `us.quiz.${id}.partner`,
-    {}
-  );
-  const [rewarded, setRewarded] = usePersistent<boolean>(
-    `us.quiz.${id}.rewarded`,
-    false
-  );
-  const [turn, setTurn] = useState<Player>("me");
+  // Two answer slots, synced across both devices. Which slot is "yours" is
+  // tied to who's signed in, so each phone writes to its own slot.
+  const [slot0, setSlot0] = useShared<Answers>(`quiz.${id}.0`, {});
+  const [slot1, setSlot1] = useShared<Answers>(`quiz.${id}.1`, {});
+
+  const myAns = meIndex === 0 ? slot0 : slot1;
+  const setMyAns = meIndex === 0 ? setSlot0 : setSlot1;
+  const theirAns = meIndex === 0 ? slot1 : slot0;
+  const setTheirAns = meIndex === 0 ? setSlot1 : setSlot0;
+
+  const [view, setView] = useState<View>("me");
 
   const total = quiz?.questions.length ?? 0;
-  const meDone = quiz ? Object.keys(meAns).length >= total : false;
-  const partnerDone = quiz ? Object.keys(partnerAns).length >= total : false;
+  const meDone = quiz ? Object.keys(myAns).length >= total : false;
+  const partnerDone = quiz ? Object.keys(theirAns).length >= total : false;
   const bothDone = meDone && partnerDone;
   const revealed = quiz ? (quiz.revealAfterBoth ? bothDone : true) : false;
 
   const matches = useMemo(() => {
     if (!quiz) return 0;
     return quiz.questions.filter(
-      (q) => meAns[q.id] && meAns[q.id] === partnerAns[q.id]
+      (q) => myAns[q.id] && myAns[q.id] === theirAns[q.id]
     ).length;
-  }, [quiz, meAns, partnerAns]);
+  }, [quiz, myAns, theirAns]);
+
+  // Reward once both are done. Idempotent across devices: earn dedupes by the
+  // stable id `quiz:<id>`, and markComplete is idempotent — so even if both
+  // phones observe completion, coins + completion are counted exactly once.
+  const rewardedRef = useRef(false);
+  useEffect(() => {
+    if (!quiz || !bothDone || rewardedRef.current) return;
+    rewardedRef.current = true;
+    earn(quiz.reward, `Completed "${quiz.title}"`, `quiz:${quiz.id}`);
+    markComplete(quiz.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bothDone, quiz]);
 
   if (!quiz) {
     return (
@@ -59,54 +71,47 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
     );
   }
 
-  if (bothDone && !rewarded) {
-    earn(quiz.reward, `Completed "${quiz.title}"`);
-    markComplete(quiz.id);
-    setRewarded(true);
-  }
-
-  const current = turn === "me" ? meAns : partnerAns;
-  const setCurrent = turn === "me" ? setMeAns : setPartnerAns;
+  const current = view === "me" ? myAns : theirAns;
+  const setCurrent = view === "me" ? setMyAns : setTheirAns;
   const answer = (qid: string, value: string) =>
     setCurrent({ ...current, [qid]: value });
 
-  const turnName = turn === "me" ? myName : partnerName;
   const optionCount = quiz.questions.filter((q) => q.options).length;
 
   return (
     <Screen title={quiz.title} backHref="/quizzes" backLabel="Quizzes">
-      {/* Whose turn — pass & play name switcher */}
+      {/* You / Partner — you answer on your own phone; use Partner only for
+          pass-and-play on a single device. */}
       <section className="px-4 pt-1">
         <div className="segmented">
-          {(["me", "partner"] as Player[]).map((p) => {
-            const done = p === "me" ? meDone : partnerDone;
-            const name = p === "me" ? myName : partnerName;
+          {(["me", "partner"] as View[]).map((v) => {
+            const done = v === "me" ? meDone : partnerDone;
             return (
               <button
-                key={p}
-                data-active={turn === p}
-                onClick={() => setTurn(p)}
+                key={v}
+                data-active={view === v}
+                onClick={() => setView(v)}
                 className="segment"
               >
-                {name}
+                {v === "me" ? "You" : "Partner"}
                 {done && " ✓"}
               </button>
             );
           })}
         </div>
         <p className="t-footnote c-label-2 mt-2 text-center">
-          Whoever&apos;s answering — tap your name.{" "}
+          Answers sync between your phones.{" "}
           {quiz.revealAfterBoth
-            ? "Answers stay hidden until you both finish 🤫"
-            : "Answers reveal instantly."}
+            ? "Hidden until you both finish 🤫"
+            : "They appear as you go."}
         </p>
       </section>
 
       {/* Questions */}
       <div className="space-y-5 pt-5">
         {quiz.questions.map((q, i) => {
-          const myPick = meAns[q.id];
-          const theirPick = partnerAns[q.id];
+          const myPick = myAns[q.id];
+          const theirPick = theirAns[q.id];
           return (
             <section key={q.id} className="px-4">
               <p className="group-header uppercase">
@@ -144,7 +149,7 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
                     <input
                       value={current[q.id] ?? ""}
                       onChange={(e) => answer(q.id, e.target.value)}
-                      placeholder={`${turnName}'s answer…`}
+                      placeholder={view === "me" ? "Your answer…" : "Partner's answer…"}
                       className="w-full rounded-[12px] bg-fill px-3.5 py-3 t-body c-label outline-none placeholder:c-label-3"
                     />
                   )}
@@ -154,15 +159,13 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
                   <div className="mt-3.5 rounded-[14px] bg-fill p-3.5">
                     <div className="grid grid-cols-2 gap-3">
                       <div className="min-w-0">
-                        <p className="t-caption c-label-2 truncate">{myName}</p>
+                        <p className="t-caption c-label-2 truncate">You</p>
                         <p className="t-subhead c-label mt-0.5 font-semibold">
                           {myPick || "—"}
                         </p>
                       </div>
                       <div className="min-w-0">
-                        <p className="t-caption c-label-2 truncate">
-                          {partnerName}
-                        </p>
+                        <p className="t-caption c-label-2 truncate">Partner</p>
                         <p className="t-subhead c-label mt-0.5 font-semibold">
                           {theirPick || "—"}
                         </p>
@@ -204,10 +207,8 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
           <div className="row">
             <span className="t-subhead c-label-2">
               {meDone && !partnerDone
-                ? `Now pass to ${partnerName} 💞`
-                : partnerDone && !meDone
-                  ? `Now pass to ${myName} 💞`
-                  : "Answer all questions to continue"}
+                ? "Waiting for your partner to finish 💞"
+                : "Answer all the questions to continue"}
             </span>
           </div>
         )}

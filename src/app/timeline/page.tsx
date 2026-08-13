@@ -5,20 +5,13 @@ import { Plus, Trash2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import Screen from "@/components/Screen";
 import { Section, Row } from "@/components/List";
-import {
-  usePersistent,
-  storeKeys,
-  makeId,
-  type TimelineEntry,
-} from "@/lib/store";
+import { makeId, type TimelineEntry } from "@/lib/store";
+import { useShared } from "@/lib/couple";
 
 const EMOJIS = ["💖", "✈️", "🍜", "🎬", "🌅", "🎁", "🏖️", "☕", "🎂", "⭐"];
 
 export default function TimelinePage() {
-  const [entries, setEntries] = usePersistent<TimelineEntry[]>(
-    storeKeys.timeline,
-    []
-  );
+  const [entries, setEntries] = useShared<TimelineEntry[]>("timeline", []);
   const [open, setOpen] = useState(false);
 
   const sorted = [...entries].sort((a, b) => (a.date < b.date ? 1 : -1));

@@ -9,7 +9,7 @@ import { useIdentity } from "@/lib/couple";
 import { useMessages, MAX_LEN } from "@/lib/messages";
 
 export default function MessageBar({ className = "" }: { className?: string }) {
-  const { meIndex, myName, partnerName } = useIdentity();
+  const { meIndex } = useIdentity();
   const { messages, setMyNote } = useMessages();
   const partnerIndex: 0 | 1 = meIndex === 0 ? 1 : 0;
 
@@ -41,7 +41,7 @@ export default function MessageBar({ className = "" }: { className?: string }) {
       {/* Partner's note — the prominent line */}
       <p className="t-subhead c-label leading-snug">
         <span aria-hidden className="mr-1">💌</span>
-        <span className="c-label-2">{partnerName}:</span>{" "}
+        <span className="c-label-2">A note for you:</span>{" "}
         {partnerNote ? (
           <span className="font-semibold">“{partnerNote}”</span>
         ) : (
@@ -70,7 +70,7 @@ export default function MessageBar({ className = "" }: { className?: string }) {
                   cancel();
                 }
               }}
-              placeholder={`Leave a note for ${partnerName} 💕`}
+              placeholder="Leave a note 💕"
               className="min-w-0 flex-1 bg-transparent t-subhead c-label outline-none placeholder:c-label-3"
               aria-label="Your note"
             />
@@ -94,11 +94,11 @@ export default function MessageBar({ className = "" }: { className?: string }) {
             className="flex w-full items-center gap-1.5 text-left"
             aria-label="Edit your note"
           >
-            <span className="t-footnote c-label-3 shrink-0">{myName}:</span>
+            <span className="t-footnote c-label-3 shrink-0">You:</span>
             <span
               className={`t-subhead truncate ${myNote ? "c-label" : "c-label-3 italic"}`}
             >
-              {myNote || `Leave a note for ${partnerName} 💕`}
+              {myNote || "Leave a note 💕"}
             </span>
             <Pencil size={13} className="ml-auto shrink-0 c-tint" />
           </button>
