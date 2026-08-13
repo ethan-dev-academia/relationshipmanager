@@ -10,6 +10,11 @@ export const IS_SUPABASE_CONFIGURED =
 
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "Us";
 
+/** The two people. Shown together in the app header. */
+export const MY_NAME = process.env.NEXT_PUBLIC_MY_NAME ?? "Ethan";
+export const PARTNER_NAME = process.env.NEXT_PUBLIC_PARTNER_NAME ?? "My Love";
+export const COUPLE = `${MY_NAME} & ${PARTNER_NAME}`;
+
 /** Relationship start date. Defaults to March 7th, 2026. */
 export const RELATIONSHIP_START =
   process.env.NEXT_PUBLIC_RELATIONSHIP_START ?? "2026-03-07";

@@ -1,18 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { MapPin, RefreshCw, Trophy, CalendarHeart } from "lucide-react";
+import { MapPin, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
-import PageHeader from "@/components/PageHeader";
-import GlassCard from "@/components/GlassCard";
-import { daysTogether, allMilestones, daysUntil, startDate } from "@/lib/date";
+import Screen from "@/components/Screen";
+import { Section, Row } from "@/components/List";
+import IconTile, { TILE } from "@/components/IconTile";
+import Switch from "@/components/Switch";
+import { allMilestones, daysUntil, startDate } from "@/lib/date";
+import { useElapsed } from "@/lib/useElapsed";
 import { distanceKm, formatDistance, getCurrentPosition } from "@/lib/geo";
 import { usePersistent, storeKeys, type LocationPing } from "@/lib/store";
 
 export default function StatsPage() {
-  const [days, setDays] = useState<number | null>(null);
-
-  useEffect(() => setDays(daysTogether()), []);
+  const t = useElapsed();
 
   const upcoming = useMemo(
     () => allMilestones().filter((m) => daysUntil(m.date) >= 0).slice(0, 8),
@@ -20,95 +21,112 @@ export default function StatsPage() {
   );
 
   return (
-    <div>
-      <PageHeader title="Our Stats" subtitle="Every milestone counts" />
-
-      <section className="px-4">
-        <div className="grid grid-cols-2 gap-3">
-          <StatBox
-            icon={<CalendarHeart size={20} />}
-            value={days ?? "—"}
-            label="days together"
+    <Screen title="Our Stats">
+      {/* Live "time together" — gradient hero (identical in light + dark) */}
+      <section className="px-4 pt-1">
+        <div
+          className="card relative overflow-hidden p-5 text-white"
+          style={{
+            background: "linear-gradient(150deg, #ff5c9a, var(--tint), #d81f74)",
+            boxShadow: "var(--elev), inset 0 1px 0 rgba(255,255,255,.45)",
+          }}
+        >
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(255,255,255,.25), transparent)",
+            }}
           />
-          <StatBox
-            icon={<Trophy size={20} />}
-            value={days !== null ? Math.floor(days / 30) : "—"}
-            label="months (approx)"
-          />
-        </div>
-        <p className="mt-2 px-1 text-xs text-rose-400/80">
-          Since {format(startDate(), "MMMM d, yyyy")}
-        </p>
-      </section>
-
-      {/* Distance */}
-      <section id="distance" className="px-4 pt-5">
-        <p className="section-title mb-2 px-1">Distance</p>
-        <DistanceCard />
-      </section>
-
-      {/* Milestones */}
-      <section className="px-4 pt-5">
-        <p className="section-title mb-2 px-1">Upcoming milestones</p>
-        <div className="space-y-2.5">
-          {upcoming.map((m) => {
-            const d = daysUntil(m.date);
-            return (
-              <GlassCard
-                key={m.label + m.date.toISOString()}
-                className="flex items-center justify-between !py-3.5"
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`flex h-10 w-10 items-center justify-center rounded-2xl text-lg ${
-                      m.major ? "bg-rose-500 text-white" : "bg-rose-100 text-rose-500"
-                    }`}
-                  >
-                    {m.major ? "✨" : "🌙"}
-                  </span>
-                  <div>
-                    <p className="font-semibold text-rose-900">{m.label}</p>
-                    <p className="text-xs text-rose-500/80">
-                      {format(m.date, "EEE, MMM d yyyy")}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold tabular-nums text-rose-600">
-                    {d === 0 ? "Today" : d}
-                  </p>
-                  {d !== 0 && <p className="text-[10px] text-rose-400">days</p>}
-                </div>
-              </GlassCard>
-            );
-          })}
+          <div className="relative">
+            <p className="t-subhead font-medium text-white/85">Time together</p>
+            <div className="mt-3 grid grid-cols-4 gap-2">
+              <LiveCell value={t.ready ? t.days : 0} label="days" wide />
+              <LiveCell value={t.ready ? t.hours : 0} label="hrs" />
+              <LiveCell value={t.ready ? t.minutes : 0} label="min" />
+              <LiveCell value={t.ready ? t.seconds : 0} label="sec" />
+            </div>
+          </div>
         </div>
       </section>
+
+      {/* Totals */}
+      <section className="grid grid-cols-3 gap-3 px-4 pt-3">
+        <StatCard value={t.ready ? t.months : "—"} label="Months" />
+        <StatCard value={t.ready ? t.totalDays.toLocaleString() : "—"} label="Total days" />
+        <StatCard value={t.ready ? t.totalHours.toLocaleString() : "—"} label="Total hours" />
+      </section>
+      <p className="t-footnote c-label-2 px-4 pt-2">
+        Since {format(startDate(), "MMMM d, yyyy")}
+      </p>
+
+      <div id="distance" />
+      <Section header="Distance" className="pt-6">
+        <DistanceRows />
+      </Section>
+
+      <Section header="Upcoming milestones" className="pt-6">
+        {upcoming.map((m) => {
+          const d = daysUntil(m.date);
+          return (
+            <Row
+              key={m.label + m.date.toISOString()}
+              tile={
+                <IconTile color={m.major ? TILE.pink : TILE.purple}>
+                  <span className="text-[15px]">{m.major ? "✨" : "🌙"}</span>
+                </IconTile>
+              }
+              title={m.label}
+              subtitle={format(m.date, "EEE, MMM d yyyy")}
+              chevron={false}
+              value={
+                <span className="c-tint font-semibold">
+                  {d === 0 ? "Today" : `${d}d`}
+                </span>
+              }
+            />
+          );
+        })}
+      </Section>
+    </Screen>
+  );
+}
+
+function StatCard({ value, label }: { value: React.ReactNode; label: string }) {
+  return (
+    <div className="card p-3.5">
+      <p className="text-[26px] font-bold leading-none tabular-nums c-tint">
+        {value}
+      </p>
+      <p className="t-footnote c-label-2 mt-1.5 font-medium">{label}</p>
     </div>
   );
 }
 
-function StatBox({
-  icon,
+function LiveCell({
   value,
   label,
+  wide,
 }: {
-  icon: React.ReactNode;
-  value: React.ReactNode;
+  value: number;
   label: string;
+  wide?: boolean;
 }) {
+  const text = wide ? String(value) : String(value).padStart(2, "0");
   return (
-    <GlassCard className="text-center">
-      <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-100 text-rose-500">
-        {icon}
-      </span>
-      <p className="mt-2 text-3xl font-black tabular-nums text-rose-600">{value}</p>
-      <p className="text-xs font-medium text-rose-500/80">{label}</p>
-    </GlassCard>
+    <div className="rounded-2xl bg-white/15 py-2.5 text-center">
+      <p className="text-[24px] font-bold leading-none tabular-nums text-white">
+        {text}
+      </p>
+      <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-white/75">
+        {label}
+      </p>
+    </div>
   );
 }
 
-function DistanceCard() {
+function DistanceRows() {
   const [me, setMe] = usePersistent<LocationPing | null>(
     storeKeys.location + ".me",
     null
@@ -139,7 +157,6 @@ function DistanceCard() {
     }
   };
 
-  // Periodic background updates while the app is open (opt-in toggle).
   useEffect(() => {
     if (!auto) return;
     const id = setInterval(share, 60_000);
@@ -147,59 +164,47 @@ function DistanceCard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auto]);
 
-  const km =
-    me && partner ? distanceKm(me, partner) : null;
+  const km = me && partner ? distanceKm(me, partner) : null;
 
   return (
-    <GlassCard strong>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-500">
-            <MapPin size={22} />
-          </span>
-          <div>
-            <p className="font-semibold text-rose-900">
-              {km !== null ? formatDistance(km) : "— apart"}
-            </p>
-            <p className="text-xs text-rose-500/80">
-              {partner
-                ? "Both locations shared"
-                : "Waiting for your partner to share"}
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={share}
-          disabled={loading}
-          className="btn-primary !px-4 !py-2 text-sm"
-        >
-          <RefreshCw
-            size={16}
-            className={loading ? "animate-spin" : ""}
-            style={{ display: "inline", marginRight: 6, verticalAlign: "-2px" }}
-          />
-          Share
-        </button>
-      </div>
-
-      <label className="mt-4 flex items-center justify-between rounded-2xl bg-white/40 px-4 py-2.5">
-        <span className="text-sm font-medium text-rose-700">
-          Auto-update while app is open
-        </span>
-        <input
-          type="checkbox"
-          checked={auto}
-          onChange={(e) => setAuto(e.target.checked)}
-          className="h-5 w-5 accent-rose-500"
-        />
-      </label>
-
+    <>
+      <Row
+        tile={<IconTile color={TILE.blue}><MapPin size={17} /></IconTile>}
+        title={km !== null ? formatDistance(km) + " apart" : "Not shared yet"}
+        subtitle={
+          error
+            ? error
+            : partner
+              ? "Both locations shared"
+              : "Waiting for your partner to share"
+        }
+        chevron={false}
+        accessory={
+          <button onClick={share} disabled={loading} className="btn-tinted">
+            <RefreshCw
+              size={13}
+              className={loading ? "animate-spin" : ""}
+              style={{ display: "inline", marginRight: 5, verticalAlign: "-2px" }}
+            />
+            Share
+          </button>
+        }
+      />
+      <Row
+        title="Auto-update while open"
+        chevron={false}
+        accessory={<Switch checked={auto} onChange={setAuto} />}
+      />
       {me && (
-        <p className="mt-2 text-[11px] text-rose-400">
-          Your location updated {format(new Date(me.at), "MMM d, h:mm a")}
-        </p>
+        <Row
+          title={
+            <span className="t-footnote c-label-2">
+              Your location updated {format(new Date(me.at), "MMM d, h:mm a")}
+            </span>
+          }
+          chevron={false}
+        />
       )}
-      {error && <p className="mt-2 text-[11px] text-red-400">{error}</p>}
-    </GlassCard>
+    </>
   );
 }

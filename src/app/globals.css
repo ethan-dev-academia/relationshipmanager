@@ -2,69 +2,422 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   Cream & pink design system — LIGHT + DARK.
+   Pink is the single accent/tint. Theme follows the system by
+   default; `data-theme="light|dark"` on <html> forces it (set by
+   the ThemeToggle, applied pre-paint by an inline script).
+   ============================================================ */
 :root {
-  --bg-1: #fff5f7;
-  --bg-2: #ffe9f0;
-  --bg-3: #ffdce9;
+  color-scheme: light;
+
+  --grouped: #fff6f1; /* warm cream base under the ambient wash */
+  --card: rgba(255, 255, 255, 0.82); /* content cards */
+  --card-2: #ffffff;
+  --seg-active: #ffffff;
+
+  --label: #3a2130; /* warm deep plum text */
+  --label-2: rgba(90, 50, 68, 0.62);
+  --label-3: rgba(90, 50, 68, 0.34);
+  --separator: rgba(120, 60, 90, 0.14);
+
+  --fill: rgba(255, 120, 165, 0.1);
+  --fill-2: rgba(255, 120, 165, 0.2);
+
+  --tint: #ff2f7a; /* romantic pink accent */
+  --tint-press: #e01f66;
+  --tint-bg: rgba(255, 47, 122, 0.12);
+
+  --red: #ff3b30; /* destructive / error */
+  --red-bg: rgba(255, 59, 48, 0.12);
+
+  --shadow: 0 1px 2px rgba(120, 40, 70, 0.06);
+  --elev: 0 12px 34px -8px rgba(180, 60, 110, 0.16),
+    0 2px 8px rgba(180, 60, 110, 0.06);
+
+  --glass-bg: rgba(255, 251, 249, 0.62);
+  --glass-border: rgba(255, 255, 255, 0.85);
+  --glass-hi: rgba(255, 255, 255, 0.95);
+  --glass-shadow: 0 16px 40px -8px rgba(180, 60, 110, 0.24),
+    0 4px 12px rgba(180, 60, 110, 0.1);
+
+  --amb-1: #ffd9e7;
+  --amb-2: #ffe7d6;
+  --amb-3: #ffe0ec;
+  --amb-base: #fff6f1;
+}
+
+/* Dark palette — warm charcoal + brighter pink. Applied when the system
+   is dark (unless forced light) or when data-theme="dark". */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --grouped: #0e0b0e;
+    --card: rgba(30, 26, 30, 0.78);
+    --card-2: #211c21;
+    --seg-active: #3a333a;
+
+    --label: #fbf1f5;
+    --label-2: rgba(245, 235, 240, 0.62);
+    --label-3: rgba(245, 235, 240, 0.34);
+    --separator: rgba(255, 255, 255, 0.1);
+
+    --fill: rgba(255, 140, 175, 0.12);
+    --fill-2: rgba(255, 140, 175, 0.24);
+
+    --tint: #ff5c96;
+    --tint-press: #ff2f7a;
+    --tint-bg: rgba(255, 92, 150, 0.18);
+
+    --red: #ff6961;
+    --red-bg: rgba(255, 105, 97, 0.18);
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --elev: 0 16px 44px -10px rgba(0, 0, 0, 0.66), 0 2px 8px rgba(0, 0, 0, 0.4);
+
+    --glass-bg: rgba(36, 30, 36, 0.62);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-hi: rgba(255, 255, 255, 0.16);
+    --glass-shadow: 0 18px 46px -10px rgba(0, 0, 0, 0.72),
+      0 4px 14px rgba(0, 0, 0, 0.5);
+
+    --amb-1: rgba(255, 47, 122, 0.2);
+    --amb-2: rgba(120, 50, 150, 0.16);
+    --amb-3: rgba(200, 60, 120, 0.14);
+    --amb-base: #0e0b0e;
+  }
+}
+
+/* Manual dark override (wins over system light) */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --grouped: #0e0b0e;
+  --card: rgba(30, 26, 30, 0.78);
+  --card-2: #211c21;
+  --seg-active: #3a333a;
+
+  --label: #fbf1f5;
+  --label-2: rgba(245, 235, 240, 0.62);
+  --label-3: rgba(245, 235, 240, 0.34);
+  --separator: rgba(255, 255, 255, 0.1);
+
+  --fill: rgba(255, 140, 175, 0.12);
+  --fill-2: rgba(255, 140, 175, 0.24);
+
+  --tint: #ff5c96;
+  --tint-press: #ff2f7a;
+  --tint-bg: rgba(255, 92, 150, 0.18);
+
+  --red: #ff6961;
+  --red-bg: rgba(255, 105, 97, 0.18);
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --elev: 0 16px 44px -10px rgba(0, 0, 0, 0.66), 0 2px 8px rgba(0, 0, 0, 0.4);
+
+  --glass-bg: rgba(36, 30, 36, 0.62);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-hi: rgba(255, 255, 255, 0.16);
+  --glass-shadow: 0 18px 46px -10px rgba(0, 0, 0, 0.72),
+    0 4px 14px rgba(0, 0, 0, 0.5);
+
+  --amb-1: rgba(255, 47, 122, 0.2);
+  --amb-2: rgba(120, 50, 150, 0.16);
+  --amb-3: rgba(200, 60, 120, 0.14);
+  --amb-base: #0e0b0e;
 }
 
 * {
   -webkit-tap-highlight-color: transparent;
 }
-
 html,
 body {
   height: 100%;
 }
-
 body {
-  color: #4a1f33;
-  background:
-    radial-gradient(1200px 800px at 15% -10%, #ffe0ec 0%, transparent 55%),
-    radial-gradient(1000px 700px at 110% 10%, #ffd0e6 0%, transparent 50%),
-    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 45%, var(--bg-3) 100%);
-  background-attachment: fixed;
+  color: var(--label);
   min-height: 100dvh;
   overscroll-behavior-y: none;
+  font-family: var(--font-serif), ui-serif, Georgia, "Times New Roman", serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background-color: var(--amb-base);
+  background-image:
+    radial-gradient(115% 85% at 8% -8%, var(--amb-1) 0%, transparent 52%),
+    radial-gradient(100% 80% at 100% 0%, var(--amb-2) 0%, transparent 48%),
+    radial-gradient(120% 100% at 50% 115%, var(--amb-3) 0%, transparent 55%);
+  background-attachment: fixed;
 }
 
-/* iOS safe-area helpers */
-.safe-top {
-  padding-top: max(1rem, env(safe-area-inset-top));
+input::placeholder,
+textarea::placeholder {
+  color: var(--label-3);
 }
-.safe-bottom {
-  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* ---------- Type scale (SF / system) ---------- */
+@layer utilities {
+  .t-large {
+    font-size: 34px;
+    line-height: 41px;
+    font-weight: 700;
+    letter-spacing: 0.37px;
+  }
+  .t-title1 {
+    font-size: 28px;
+    line-height: 34px;
+    font-weight: 700;
+    letter-spacing: 0.36px;
+  }
+  .t-title2 {
+    font-size: 22px;
+    line-height: 28px;
+    font-weight: 700;
+  }
+  .t-title3 {
+    font-size: 20px;
+    line-height: 25px;
+    font-weight: 600;
+  }
+  .t-headline {
+    font-size: 17px;
+    line-height: 22px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+  }
+  .t-body {
+    font-size: 17px;
+    line-height: 22px;
+    letter-spacing: -0.4px;
+  }
+  .t-callout {
+    font-size: 16px;
+    line-height: 21px;
+    letter-spacing: -0.32px;
+  }
+  .t-subhead {
+    font-size: 15px;
+    line-height: 20px;
+    letter-spacing: -0.24px;
+  }
+  .t-footnote {
+    font-size: 13px;
+    line-height: 18px;
+  }
+  .t-caption {
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  .c-label {
+    color: var(--label);
+  }
+  .c-label-2 {
+    color: var(--label-2);
+  }
+  .c-label-3 {
+    color: var(--label-3);
+  }
+  .c-tint {
+    color: var(--tint);
+  }
+
+  /* Section header label above a grouped list */
+  .group-header {
+    font-size: 13px;
+    line-height: 18px;
+    letter-spacing: -0.08px;
+    color: var(--label-2);
+    padding: 0 16px 6px;
+  }
+  .group-footer {
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--label-2);
+    padding: 7px 16px 0;
+  }
 }
 
 @layer components {
-  /* The core "liquid glass" surface */
+  /* ---- Liquid Glass material (floating chrome) ---- */
   .glass {
-    @apply rounded-3xl border border-white/50 bg-white/40 shadow-glass backdrop-blur-2xl backdrop-saturate-150;
+    position: relative;
+    background: var(--glass-bg);
+    backdrop-filter: saturate(180%) blur(24px);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+    border: 1px solid var(--glass-border);
+    box-shadow:
+      var(--glass-shadow),
+      inset 0 1px 0 var(--glass-hi),
+      inset 0 -8px 20px -12px rgba(0, 0, 0, 0.2);
   }
-  .glass-strong {
-    @apply rounded-3xl border border-white/60 bg-white/60 shadow-glass-lg backdrop-blur-2xl backdrop-saturate-150;
-  }
-  .glass-pill {
-    @apply rounded-full border border-white/50 bg-white/45 backdrop-blur-xl;
+  /* specular sheen along the top edge */
+  .glass::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      140deg,
+      var(--glass-hi),
+      transparent 40%,
+      transparent 60%,
+      rgba(255, 255, 255, 0.12)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
 
-  .btn-primary {
-    @apply rounded-2xl bg-gradient-to-b from-rose-400 to-rose-500 px-5 py-3 font-semibold text-white shadow-[0_8px_24px_rgba(240,45,116,0.35)] transition active:scale-[0.97];
+  /* Content cards & inset grouped lists — solid, calm, generous rounding */
+  .list {
+    background: var(--card);
+    backdrop-filter: saturate(160%) blur(12px);
+    -webkit-backdrop-filter: saturate(160%) blur(12px);
+    border: 0.5px solid var(--separator);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--elev);
   }
-  .btn-glass {
-    @apply glass rounded-2xl px-5 py-3 font-semibold text-rose-700 transition active:scale-[0.97];
+  .card {
+    background: var(--card);
+    backdrop-filter: saturate(160%) blur(12px);
+    -webkit-backdrop-filter: saturate(160%) blur(12px);
+    border: 0.5px solid var(--separator);
+    border-radius: 22px;
+    box-shadow: var(--elev);
   }
 
-  .section-title {
-    @apply text-sm font-semibold uppercase tracking-wider text-rose-400/80;
+  /* A single list row, 44pt min height with hairline separator */
+  .row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 48px;
+    padding: 9px 16px;
   }
-}
+  .row:not(:first-child)::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: var(--sep-inset, 16px);
+    right: 0;
+    height: 0.5px;
+    background: var(--separator);
+  }
+  .row-tap:active {
+    background: var(--fill);
+  }
 
-/* Hide scrollbars but keep scrolling (mobile feel) */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  /* Rounded-square icon tile (SF Symbol style, concentric rounding) */
+  .tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      0 2px 6px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Buttons — bold rounded rectangles with depth (not thin pills) */
+  .btn-filled {
+    background: linear-gradient(180deg, var(--tint), var(--tint-press));
+    color: #fff;
+    border-radius: 16px;
+    padding: 16px 22px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    transition: transform 0.12s, filter 0.15s;
+    box-shadow:
+      0 10px 24px -8px var(--tint),
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -2px 6px -2px rgba(0, 0, 0, 0.25);
+  }
+  .btn-filled:active {
+    transform: scale(0.97);
+    filter: brightness(0.96);
+  }
+  .btn-filled:disabled {
+    opacity: 0.4;
+    box-shadow: none;
+  }
+  .btn-tinted {
+    background: var(--tint-bg);
+    color: var(--tint);
+    border-radius: 12px;
+    padding: 9px 15px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .btn-tinted:active {
+    opacity: 0.7;
+  }
+
+  /* Glass nav button (back / add / trailing) — rounded rectangle */
+  .glass-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    min-width: 38px;
+    padding: 0 6px;
+    border-radius: 13px;
+    color: var(--tint);
+    font-weight: 600;
+  }
+
+  /* Form field (grouped inset text field) */
+  .field {
+    width: 100%;
+    background: var(--card);
+    color: var(--label);
+    border: 0.5px solid var(--separator);
+    border-radius: 16px;
+    padding: 15px 18px;
+    font-size: 17px;
+    letter-spacing: -0.4px;
+    outline: none;
+    box-shadow: var(--elev);
+  }
+  .field::placeholder {
+    color: var(--label-3);
+  }
+
+  /* iOS segmented control */
+  .segmented {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    background: var(--fill);
+    border-radius: 12px;
+  }
+  .segment {
+    flex: 1;
+    text-align: center;
+    padding: 8px 8px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--label);
+    transition: background 0.2s;
+  }
+  .segment[data-active="true"] {
+    background: var(--seg-active);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
 }

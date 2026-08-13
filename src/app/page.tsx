@@ -2,18 +2,31 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Clock, Sparkles, Gamepad2, Heart, MapPin, ChevronRight } from "lucide-react";
-import GlassCard from "@/components/GlassCard";
-import { APP_NAME } from "@/lib/config";
-import { daysTogether, nextMonthiversary, daysUntil } from "@/lib/date";
+import {
+  Clock,
+  Sparkles,
+  Gamepad2,
+  Heart,
+  MapPin,
+  ChevronRight,
+  Images,
+  Target,
+  Settings,
+} from "lucide-react";
+import IconTile, { TILE } from "@/components/IconTile";
+import MessageBar from "@/components/MessageBar";
+import { useElapsed } from "@/lib/useElapsed";
+import { nextMonthiversary, daysUntil } from "@/lib/date";
+import { MY_NAME, PARTNER_NAME } from "@/lib/config";
+import { distanceKm, formatDistance } from "@/lib/geo";
+import { usePersistent, storeKeys, type LocationPing } from "@/lib/store";
 
 export default function HomePage() {
-  const [days, setDays] = useState<number | null>(null);
-  const [nextLabel, setNextLabel] = useState<string>("");
+  const t = useElapsed();
+  const [nextLabel, setNextLabel] = useState("");
   const [nextDays, setNextDays] = useState<number | null>(null);
 
   useEffect(() => {
-    setDays(daysTogether());
     const m = nextMonthiversary();
     if (m) {
       setNextLabel(m.label);
@@ -23,83 +36,256 @@ export default function HomePage() {
 
   return (
     <div>
-      <header className="safe-top px-5 pt-8">
-        <p className="section-title">Welcome to</p>
-        <h1 className="text-4xl font-extrabold tracking-tight text-rose-900">
-          {APP_NAME} <span className="animate-float inline-block">💕</span>
-        </h1>
+      {/* Settings gear */}
+      <div className="safe-top flex justify-end px-4 pt-3">
+        <Link
+          href="/settings"
+          aria-label="Settings"
+          className="flex h-9 w-9 items-center justify-center rounded-full active:scale-95"
+          style={{ color: "var(--label-2)" }}
+        >
+          <Settings size={22} />
+        </Link>
+      </div>
+
+      {/* Couple masthead — two profile photos + names */}
+      <header className="flex items-start justify-center gap-4 px-4 pb-2 pt-4">
+        <Avatar name={MY_NAME} tint="#ff5c9a" />
+        <span className="pt-7 text-2xl">💗</span>
+        <Avatar name={PARTNER_NAME} tint="#b95cf0" />
       </header>
 
-      {/* Hero: days together */}
-      <section className="px-4 pt-5">
-        <GlassCard strong className="relative overflow-hidden text-center">
-          <div className="pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full bg-rose-300/40 blur-2xl" />
-          <p className="section-title">Together for</p>
-          <p className="mt-1 text-6xl font-black tabular-nums text-rose-600">
-            {days ?? "—"}
-          </p>
-          <p className="text-lg font-semibold text-rose-500">
-            {days === 1 ? "day" : "days"}
-          </p>
+      {/* Featured live "together for" card */}
+      <section className="px-4 pt-7">
+        <div
+          className="card relative overflow-hidden p-6"
+          style={{
+            background:
+              "linear-gradient(150deg, #ff5c9a 0%, var(--tint) 45%, #d81f74 100%)",
+            boxShadow: "var(--elev), inset 0 1px 0 rgba(255,255,255,0.45)",
+          }}
+        >
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(255,255,255,0.28), transparent)",
+            }}
+          />
+          <div className="pointer-events-none absolute -right-6 -top-8 text-[120px] leading-none opacity-20">
+            💗
+          </div>
+
+          <div className="flex items-center justify-between">
+            <p className="t-subhead font-semibold text-white/80">Together for</p>
+            <span className="rounded-full bg-white/20 px-2.5 py-1 text-[12px] font-semibold text-white">
+              {t.months} {t.months === 1 ? "month" : "months"}
+            </span>
+          </div>
+
+          <div className="mt-3 grid grid-cols-4 gap-1.5">
+            <TimeCell value={t.ready ? t.days : 0} label="days" wide />
+            <TimeCell value={t.ready ? t.hours : 0} label="hrs" />
+            <TimeCell value={t.ready ? t.minutes : 0} label="min" />
+            <TimeCell value={t.ready ? t.seconds : 0} label="sec" />
+          </div>
+
           {nextDays !== null && (
-            <p className="mt-3 text-sm text-rose-500/80">
+            <p className="t-footnote mt-4 font-medium text-white/85">
               {nextDays === 0
-                ? `🎉 Happy ${nextLabel}iversary today!`
-                : `${nextDays} days until ${nextLabel} 💫`}
+                ? `🎉 Happy ${nextLabel} today!`
+                : `${nextLabel} in ${nextDays} ${nextDays === 1 ? "day" : "days"} 💞`}
             </p>
           )}
-        </GlassCard>
+        </div>
       </section>
 
-      {/* Quick tiles */}
-      <section className="grid grid-cols-2 gap-3 px-4 pt-4">
-        <Tile href="/timeline" icon={Clock} label="Timeline" hint="Our memories" />
-        <Tile href="/quizzes" icon={Sparkles} label="Quizzes" hint="Answer together" />
-        <Tile href="/games" icon={Gamepad2} label="Games" hint="Earn & play" />
-        <Tile href="/stats" icon={Heart} label="Our stats" hint="Milestones" />
-      </section>
+      {/* Love note between the two of you */}
+      <div className="px-4 pt-3">
+        <MessageBar />
+      </div>
 
-      {/* Distance shortcut */}
-      <section className="px-4 pt-4">
-        <Link href="/stats#distance">
-          <GlassCard className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-500">
-                <MapPin size={22} />
-              </span>
-              <div>
-                <p className="font-semibold text-rose-900">Distance between us</p>
-                <p className="text-sm text-rose-500/80">Share your location</p>
-              </div>
+      {/* Distance + next milestone pills */}
+      <section className="grid grid-cols-2 gap-3 px-4 pt-3">
+        <DistancePill />
+        <Link href="/stats" className="active:scale-[0.98]">
+          <div className="card flex h-full items-center gap-3 p-4">
+            <IconTile color={TILE.orange} size={38}>
+              <span className="text-base">✨</span>
+            </IconTile>
+            <div className="min-w-0">
+              <p className="t-headline c-label truncate">
+                {nextDays === null ? "—" : nextDays === 0 ? "Today!" : `${nextDays}d`}
+              </p>
+              <p className="t-caption c-label-2 truncate">
+                to {nextLabel || "next milestone"}
+              </p>
             </div>
-            <ChevronRight className="text-rose-300" />
-          </GlassCard>
+          </div>
         </Link>
+      </section>
+
+      {/* Explore — custom feature cards */}
+      <section className="pt-6">
+        <p className="t-title3 c-label mb-2 px-5">Explore</p>
+        <div className="grid grid-cols-2 gap-3 px-4">
+          <FeatureCard
+            href="/timeline"
+            color={TILE.orange}
+            icon={<Clock size={19} />}
+            title="Timeline"
+            hint="Our memories, in order"
+          />
+          <FeatureCard
+            href="/quizzes"
+            color={TILE.purple}
+            icon={<Sparkles size={19} />}
+            title="Quizzes"
+            hint="Answer together"
+          />
+          <FeatureCard
+            href="/games"
+            color={TILE.green}
+            icon={<Gamepad2 size={19} />}
+            title="Games"
+            hint="Play & build our house"
+          />
+          <FeatureCard
+            href="/stats"
+            color={TILE.pink}
+            icon={<Heart size={19} fill="#fff" />}
+            title="Our Stats"
+            hint="Milestones & more"
+          />
+          <FeatureCard
+            href="/goals"
+            color={TILE.indigo}
+            icon={<Target size={19} />}
+            title="Goals"
+            hint="Dreams we're chasing"
+          />
+          <FeatureCard
+            color={TILE.teal}
+            icon={<Images size={19} />}
+            title="Album"
+            hint="Photos of us"
+            soon
+          />
+        </div>
       </section>
     </div>
   );
 }
 
-function Tile({
-  href,
-  icon: Icon,
-  label,
-  hint,
-}: {
-  href: string;
-  icon: typeof Clock;
-  label: string;
-  hint: string;
-}) {
+function Avatar({ name, tint }: { name: string; tint: string }) {
+  const initial = name.trim().charAt(0).toUpperCase() || "♥";
   return (
-    <Link href={href}>
-      <GlassCard className="h-full">
-        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-500">
-          <Icon size={22} />
-        </span>
-        <p className="mt-3 font-bold text-rose-900">{label}</p>
-        <p className="text-sm text-rose-500/80">{hint}</p>
-      </GlassCard>
+    <div className="flex w-24 flex-col items-center gap-2">
+      <div
+        className="flex h-[76px] w-[76px] items-center justify-center rounded-full text-[30px] font-bold text-white"
+        style={{
+          background: `linear-gradient(150deg, ${tint}, var(--tint-press))`,
+          boxShadow:
+            "0 8px 22px -6px rgba(40,12,32,0.35), inset 0 1px 0 rgba(255,255,255,0.4)",
+          border: "3px solid var(--card-2)",
+        }}
+      >
+        {initial}
+      </div>
+      <span className="t-subhead c-label max-w-full truncate font-semibold">
+        {name}
+      </span>
+    </div>
+  );
+}
+
+function FeatureCard({
+  href,
+  color,
+  icon,
+  title,
+  hint,
+  soon,
+}: {
+  href?: string;
+  color: string;
+  icon: React.ReactNode;
+  title: string;
+  hint: string;
+  soon?: boolean;
+}) {
+  const inner = (
+    <div className="card relative h-full p-4">
+      <div className="flex items-center justify-between">
+        <IconTile color={color} size={40}>
+          {icon}
+        </IconTile>
+        {soon ? (
+          <span className="rounded-full bg-fill px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide c-label-3">
+            Soon
+          </span>
+        ) : (
+          <ChevronRight size={18} className="c-label-3" />
+        )}
+      </div>
+      <p className="t-headline c-label mt-3">{title}</p>
+      <p className="t-footnote c-label-2">{hint}</p>
+    </div>
+  );
+
+  if (!href) return inner;
+  return (
+    <Link href={href} className="active:scale-[0.98]">
+      {inner}
     </Link>
+  );
+}
+
+function DistancePill() {
+  const [me] = usePersistent<LocationPing | null>(storeKeys.location + ".me", null);
+  const [partner] = usePersistent<LocationPing | null>(
+    storeKeys.location + ".partner",
+    null
+  );
+  const km = me && partner ? distanceKm(me, partner) : null;
+
+  return (
+    <Link href="/stats#distance" className="active:scale-[0.98]">
+      <div className="card flex h-full items-center gap-3 p-4">
+        <IconTile color={TILE.blue} size={38}>
+          <MapPin size={18} />
+        </IconTile>
+        <div className="min-w-0">
+          <p className="t-headline c-label truncate">
+            {km !== null ? formatDistance(km) : "Distance"}
+          </p>
+          <p className="t-caption c-label-2 truncate">
+            {km !== null ? "apart right now" : "Tap to share"}
+          </p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function TimeCell({
+  value,
+  label,
+  wide,
+}: {
+  value: number;
+  label: string;
+  wide?: boolean;
+}) {
+  const text = wide ? String(value) : String(value).padStart(2, "0");
+  return (
+    <div className="rounded-2xl bg-white/15 py-2.5 text-center backdrop-blur-sm">
+      <p className="text-[26px] font-bold leading-none tabular-nums text-white">
+        {text}
+      </p>
+      <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-white/70">
+        {label}
+      </p>
+    </div>
   );
 }

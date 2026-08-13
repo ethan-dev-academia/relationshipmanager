@@ -29,15 +29,14 @@ export function allMilestones(): Milestone[] {
   const start = startDate();
   const out: Milestone[] = [];
 
-  // Monthiversaries for 5 years.
+  // Monthiversaries for 5 years. Always expressed in months — never
+  // fractional years (no "0.5 years"). Whole years get a year label too.
   for (let i = 1; i <= 60; i++) {
-    const major = i % 6 === 0; // 6mo, 1yr, 18mo, 2yr...
-    const years = i / 12;
+    const major = i % 6 === 0; // 6mo, 12mo, 18mo, 24mo...
     let label = `${i} month${i === 1 ? "" : "s"}`;
-    if (Number.isInteger(years)) {
-      label = `${years} year${years === 1 ? "" : "s"}`;
-    } else if (i % 6 === 0) {
-      label = `${years} years`;
+    if (i % 12 === 0) {
+      const y = i / 12;
+      label = `${y} year${y === 1 ? "" : "s"}`;
     }
     out.push({ label, date: addMonths(start, i), major });
   }

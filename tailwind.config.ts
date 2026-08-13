@@ -8,63 +8,50 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Soft rose / pink "Us" palette
-        rose: {
-          50: "#fff5f7",
-          100: "#ffe4ec",
-          200: "#ffc9d9",
-          300: "#ffa3c0",
-          400: "#ff6fa0",
-          500: "#ff4d8d",
-          600: "#f02d74",
-          700: "#c81f5c",
-          800: "#9c1948",
-          900: "#7a1739",
-        },
-        cream: "#fff9fb",
+        // Semantic iOS tokens (resolve via CSS vars, auto light/dark)
+        tint: "var(--tint)",
+        label: "var(--label)",
+        "label-2": "var(--label-2)",
+        "label-3": "var(--label-3)",
+        card: "var(--card)",
+        "card-2": "var(--card-2)",
+        grouped: "var(--grouped)",
+        separator: "var(--separator)",
+        fill: "var(--fill)",
+        "tint-bg": "var(--tint-bg)",
+        red: "var(--red)",
+        "red-bg": "var(--red-bg)",
       },
       fontFamily: {
         sans: [
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "SF Pro Text",
-          "SF Pro Display",
-          "Segoe UI",
-          "system-ui",
-          "sans-serif",
+          "var(--font-serif)",
+          "ui-serif",
+          "Georgia",
+          "Cambria",
+          "Times New Roman",
+          "serif",
+        ],
+        serif: [
+          "var(--font-serif)",
+          "ui-serif",
+          "Georgia",
+          "Cambria",
+          "serif",
         ],
       },
-      borderRadius: {
-        xl: "1.25rem",
-        "2xl": "1.75rem",
-        "3xl": "2.25rem",
-      },
-      boxShadow: {
-        glass: "0 8px 32px rgba(240, 45, 116, 0.12), inset 0 1px 0 rgba(255,255,255,0.5)",
-        "glass-lg": "0 20px 60px rgba(240, 45, 116, 0.18), inset 0 1px 0 rgba(255,255,255,0.6)",
-        soft: "0 4px 20px rgba(0,0,0,0.06)",
-      },
-      backdropBlur: {
-        xs: "2px",
-      },
       keyframes: {
-        float: {
-          "0%,100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-8px)" },
+        "sheet-up": {
+          "0%": { transform: "translateY(100%)" },
+          "100%": { transform: "translateY(0)" },
         },
-        shimmer: {
-          "0%": { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
-        },
-        "pop-in": {
-          "0%": { opacity: "0", transform: "scale(0.96) translateY(8px)" },
-          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
         },
       },
       animation: {
-        float: "float 5s ease-in-out infinite",
-        shimmer: "shimmer 2.5s linear infinite",
-        "pop-in": "pop-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "sheet-up": "sheet-up 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
+        "fade-in": "fade-in 0.2s ease-out",
       },
     },
   },

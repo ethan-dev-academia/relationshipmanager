@@ -1,22 +1,25 @@
 "use client";
 
 import { use, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Check } from "lucide-react";
-import PageHeader from "@/components/PageHeader";
-import GlassCard from "@/components/GlassCard";
+import Screen from "@/components/Screen";
+import { Section } from "@/components/List";
 import { getQuiz } from "@/lib/quizzes";
 import { usePersistent } from "@/lib/store";
 import { useCurrency, COIN } from "@/lib/currency";
+import { useQuizProgress } from "@/lib/quizProgress";
+import { useIdentity } from "@/lib/couple";
 
-type Answers = Record<string, string>; // questionId -> answer
+type Answers = Record<string, string>;
 type Player = "me" | "partner";
+
+const MATCH_GREEN = "#34c759";
 
 export default function QuizPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const quiz = getQuiz(id);
-  const router = useRouter();
   const { earn } = useCurrency();
+  const { markComplete } = useQuizProgress();
+  const { myName, partnerName } = useIdentity();
 
   const [meAns, setMeAns] = usePersistent<Answers>(`us.quiz.${id}.me`, {});
   const [partnerAns, setPartnerAns] = usePersistent<Answers>(
@@ -33,7 +36,6 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
   const meDone = quiz ? Object.keys(meAns).length >= total : false;
   const partnerDone = quiz ? Object.keys(partnerAns).length >= total : false;
   const bothDone = meDone && partnerDone;
-
   const revealed = quiz ? (quiz.revealAfterBoth ? bothDone : true) : false;
 
   const matches = useMemo(() => {
@@ -45,158 +47,171 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
 
   if (!quiz) {
     return (
-      <div className="px-4 pt-16 text-center text-rose-500">
-        Quiz not found.
-      </div>
+      <Screen title="Quiz" backHref="/quizzes" backLabel="Quizzes">
+        <div className="px-4 pt-10 text-center">
+          <p className="text-4xl">🤔</p>
+          <p className="t-title3 c-label mt-2">Quiz not found</p>
+          <p className="t-subhead c-label-2 mt-1">
+            This quiz may have moved or no longer exists.
+          </p>
+        </div>
+      </Screen>
     );
   }
 
-  // Reward coins once, the first time both finish.
   if (bothDone && !rewarded) {
     earn(quiz.reward, `Completed "${quiz.title}"`);
+    markComplete(quiz.id);
     setRewarded(true);
   }
 
   const current = turn === "me" ? meAns : partnerAns;
   const setCurrent = turn === "me" ? setMeAns : setPartnerAns;
-
   const answer = (qid: string, value: string) =>
     setCurrent({ ...current, [qid]: value });
 
-  return (
-    <div>
-      <PageHeader
-        title={`${quiz.emoji} ${quiz.title}`}
-        subtitle={quiz.description}
-        right={
-          <button onClick={() => router.push("/quizzes")} className="btn-glass !px-3 !py-2">
-            <ArrowLeft size={18} />
-          </button>
-        }
-      />
+  const turnName = turn === "me" ? myName : partnerName;
+  const optionCount = quiz.questions.filter((q) => q.options).length;
 
-      {/* Player switch */}
-      <section className="px-4">
-        <div className="glass flex gap-1 rounded-2xl p-1">
+  return (
+    <Screen title={quiz.title} backHref="/quizzes" backLabel="Quizzes">
+      {/* Whose turn — pass & play name switcher */}
+      <section className="px-4 pt-1">
+        <div className="segmented">
           {(["me", "partner"] as Player[]).map((p) => {
             const done = p === "me" ? meDone : partnerDone;
+            const name = p === "me" ? myName : partnerName;
             return (
               <button
                 key={p}
+                data-active={turn === p}
                 onClick={() => setTurn(p)}
-                className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition ${
-                  turn === p ? "bg-rose-500 text-white" : "text-rose-600"
-                }`}
+                className="segment"
               >
-                {p === "me" ? "You" : "Partner"} {done && "✓"}
+                {name}
+                {done && " ✓"}
               </button>
             );
           })}
         </div>
-        <p className="mt-2 px-1 text-center text-xs text-rose-400">
+        <p className="t-footnote c-label-2 mt-2 text-center">
+          Whoever&apos;s answering — tap your name.{" "}
           {quiz.revealAfterBoth
             ? "Answers stay hidden until you both finish 🤫"
-            : "Answers reveal instantly"}
+            : "Answers reveal instantly."}
         </p>
       </section>
 
       {/* Questions */}
-      <section className="mt-3 space-y-3 px-4">
+      <div className="space-y-5 pt-5">
         {quiz.questions.map((q, i) => {
           const myPick = meAns[q.id];
           const theirPick = partnerAns[q.id];
-          const showCompare = revealed;
-
           return (
-            <GlassCard key={q.id}>
-              <p className="text-xs font-semibold text-rose-400">
-                Q{i + 1} of {total}
+            <section key={q.id} className="px-4">
+              <p className="group-header uppercase">
+                Question {i + 1} of {total}
               </p>
-              <p className="mt-1 font-semibold text-rose-900">{q.prompt}</p>
+              <div className="card p-4">
+                <p className="t-headline c-label">{q.prompt}</p>
 
-              {/* Answer input for the active player */}
-              <div className="mt-3">
-                {q.options ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    {q.options.map((opt) => {
-                      const selected = current[q.id] === opt.label;
-                      return (
-                        <button
-                          key={opt.label}
-                          onClick={() => answer(q.id, opt.label)}
-                          className={`rounded-2xl border px-3 py-2.5 text-sm font-medium transition ${
-                            selected
-                              ? "border-rose-400 bg-rose-500 text-white"
-                              : "border-white/60 bg-white/50 text-rose-700"
-                          }`}
-                        >
-                          {opt.emoji} {opt.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <input
-                    value={current[q.id] ?? ""}
-                    onChange={(e) => answer(q.id, e.target.value)}
-                    placeholder={`${turn === "me" ? "Your" : "Partner's"} answer...`}
-                    className="w-full rounded-2xl border border-white/60 bg-white/60 px-4 py-2.5 text-rose-900 placeholder:text-rose-300 outline-none"
-                  />
-                )}
-              </div>
-
-              {/* Reveal / compare */}
-              {showCompare && (myPick || theirPick) && (
-                <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl bg-white/40 p-3 text-sm">
-                  <div>
-                    <p className="text-[11px] font-semibold text-rose-400">You</p>
-                    <p className="font-medium text-rose-900">{myPick || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold text-rose-400">Partner</p>
-                    <p className="font-medium text-rose-900">{theirPick || "—"}</p>
-                  </div>
-                  {q.options && myPick && theirPick && (
-                    <div className="col-span-2 text-center text-xs font-semibold">
-                      {myPick === theirPick ? (
-                        <span className="text-green-500">💚 Match!</span>
-                      ) : (
-                        <span className="text-rose-400">💔 Different</span>
-                      )}
+                <div className="mt-3.5">
+                  {q.options ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {q.options.map((opt) => {
+                        const selected = current[q.id] === opt.label;
+                        return (
+                          <button
+                            key={opt.label}
+                            onClick={() => answer(q.id, opt.label)}
+                            className="rounded-[12px] px-3 py-3 t-subhead font-semibold transition active:scale-95"
+                            style={{
+                              background: selected
+                                ? "var(--tint)"
+                                : "var(--fill)",
+                              color: selected ? "#fff" : "var(--label)",
+                              boxShadow: selected
+                                ? "inset 0 1px 0 rgba(255,255,255,0.35)"
+                                : undefined,
+                            }}
+                          >
+                            {opt.emoji} {opt.label}
+                          </button>
+                        );
+                      })}
                     </div>
+                  ) : (
+                    <input
+                      value={current[q.id] ?? ""}
+                      onChange={(e) => answer(q.id, e.target.value)}
+                      placeholder={`${turnName}'s answer…`}
+                      className="w-full rounded-[12px] bg-fill px-3.5 py-3 t-body c-label outline-none placeholder:c-label-3"
+                    />
                   )}
                 </div>
-              )}
-            </GlassCard>
+
+                {revealed && (myPick || theirPick) && (
+                  <div className="mt-3.5 rounded-[14px] bg-fill p-3.5">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="min-w-0">
+                        <p className="t-caption c-label-2 truncate">{myName}</p>
+                        <p className="t-subhead c-label mt-0.5 font-semibold">
+                          {myPick || "—"}
+                        </p>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="t-caption c-label-2 truncate">
+                          {partnerName}
+                        </p>
+                        <p className="t-subhead c-label mt-0.5 font-semibold">
+                          {theirPick || "—"}
+                        </p>
+                      </div>
+                    </div>
+                    {q.options && myPick && theirPick && (
+                      <div className="mt-2.5 border-t border-separator pt-2.5 text-center t-footnote font-semibold">
+                        {myPick === theirPick ? (
+                          <span style={{ color: MATCH_GREEN }}>💚 Match!</span>
+                        ) : (
+                          <span className="c-label-2">💔 Different</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </section>
           );
         })}
-      </section>
+      </div>
 
-      {/* Result banner */}
-      <section className="px-4 pt-4">
+      {/* Result */}
+      <Section className="pt-6">
         {bothDone ? (
-          <GlassCard strong className="text-center">
-            <p className="text-3xl">🎉</p>
-            <p className="mt-1 font-bold text-rose-900">All done!</p>
-            {quiz.questions.some((q) => q.options) && (
-              <p className="text-sm text-rose-500">
-                You matched on {matches}/
-                {quiz.questions.filter((q) => q.options).length} choices
+          <div className="p-6 text-center">
+            <p className="text-4xl">🎉</p>
+            <p className="t-title3 c-label mt-2">All done!</p>
+            {optionCount > 0 && (
+              <p className="t-subhead c-label-2 mt-1">
+                You matched on {matches}/{optionCount} choices
               </p>
             )}
-            <p className="mt-2 inline-block rounded-full bg-rose-100 px-3 py-1 text-sm font-bold text-rose-600">
+            <p className="mt-3 inline-block rounded-full bg-tint-bg px-3.5 py-1.5 t-subhead font-semibold c-tint">
               +{quiz.reward} {COIN} earned
             </p>
-          </GlassCard>
+          </div>
         ) : (
-          <GlassCard className="flex items-center justify-center gap-2 text-sm text-rose-500">
-            <Check size={16} />
-            {meDone && !partnerDone && "Now pass to your partner 💞"}
-            {!meDone && "Answer all questions to continue"}
-            {meDone && partnerDone === false && ""}
-          </GlassCard>
+          <div className="row">
+            <span className="t-subhead c-label-2">
+              {meDone && !partnerDone
+                ? `Now pass to ${partnerName} 💞`
+                : partnerDone && !meDone
+                  ? `Now pass to ${myName} 💞`
+                  : "Answer all questions to continue"}
+            </span>
+          </div>
         )}
-      </section>
-    </div>
+      </Section>
+    </Screen>
   );
 }

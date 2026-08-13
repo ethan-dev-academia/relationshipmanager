@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, Clock, Gamepad2, Sparkles, Home } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Heart, Clock, Gamepad2, Sparkles, House } from "lucide-react";
 
 const items = [
-  { href: "/", label: "Home", icon: Home },
+  { href: "/", label: "Home", icon: House },
   { href: "/timeline", label: "Timeline", icon: Clock },
   { href: "/quizzes", label: "Quizzes", icon: Sparkles },
   { href: "/games", label: "Games", icon: Gamepad2 },
@@ -18,8 +17,8 @@ export default function BottomNav() {
   if (pathname === "/login") return null;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      <div className="glass-strong flex w-full max-w-md items-center justify-around rounded-[2rem] px-2 py-2">
+    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[max(12px,env(safe-area-inset-bottom))]">
+      <div className="glass pointer-events-auto flex w-full max-w-[380px] items-stretch justify-around rounded-[26px] px-1.5 py-1.5">
         {items.map(({ href, label, icon: Icon }) => {
           const active =
             href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -27,20 +26,24 @@ export default function BottomNav() {
             <Link
               key={href}
               href={href}
-              className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-1.5 transition",
-                active ? "text-rose-600" : "text-rose-400/60"
-              )}
+              className="relative flex flex-1 flex-col items-center gap-[3px] rounded-[20px] py-2 transition-transform active:scale-95"
+              style={{ color: active ? "var(--tint)" : "var(--label-2)" }}
             >
-              <span
-                className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-2xl transition",
-                  active && "bg-white/70 shadow-soft"
-                )}
-              >
-                <Icon size={20} strokeWidth={active ? 2.4 : 2} />
+              {active && (
+                <span
+                  className="absolute inset-0 rounded-[20px]"
+                  style={{ background: "var(--tint-bg)" }}
+                />
+              )}
+              <Icon
+                size={23}
+                strokeWidth={active ? 2.5 : 2}
+                fill={active && href === "/stats" ? "var(--tint)" : "none"}
+                className="relative"
+              />
+              <span className="relative text-[10px] font-semibold tracking-tight">
+                {label}
               </span>
-              <span className="text-[10px] font-semibold">{label}</span>
             </Link>
           );
         })}
